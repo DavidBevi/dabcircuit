@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1B541B;
+        }
+        canvas {
+            display: block; 
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 1742 1066'> <defs> <linearGradient id='grad1' gradientTransform='rotate(130)'><stop offset='0%' stop-color='%239d9d9d' stop-opacity='0' /><stop offset='10%' stop-color='%23000000' stop-opacity='0.2' /></linearGradient><linearGradient id='grad2' gradientTransform='rotate(130)'><stop offset='0%' stop-color='%23000000' stop-opacity='0.2' /><stop offset='10%' stop-color='%239d9d9d' stop-opacity='0' /></linearGradient> </defs><path d='M 424 910 C 242 945 211 873 221 837 C 251 698 295 500 300 478 C 315 376 258 339 282 269' fill='%231B541B' stroke='%23888888' stroke-width='25' stroke-linejoin='round'/><path d='M0 0 H1742 V1066 H0 V0 Z ' fill-opacity='0'/><path d='M 1202 83 c 30 0 47 17 45 68 c -14 418 3 434 6 438 c 8 9 68 -55 117 -65 c 28 -5 129 0 153 10 c 35 15 45 34 60 63 c 30 74 37 120 41 166 c 4 19 -8 34 -26 52 c -73 61 -137 97 -169 97 c -23 0 -44 -6 -129 -24 c -81 -20 -124 -111 -184 -153 c 15 61 16 75 16 103 c 19 156 -331 89 -385 59 c -47 -24 -72 -67 -107 -73 c -50 -6 -78 44 -151 72 c -79 42 -236 73 -295 73 c -86 -3 -73 -13 -70 -33 c 170 -738 170 -739 170 -739 c 2 -8 5 -15 8 -23 c 19 -47 48 -33 66 -25 c 51 26 58 35 82 59 c 126 137 182 332 213 493 c 5 24 43 43 71 -2 c 26 -34 51 -54 81 -68 c 27 -11 99 -1 133 11 c 54 20 103 39 165 89 c -73 -190 -104 -180 -183 -206 c -78 -21 -147 10 -182 -18 c -19 -9 -25 -32 4 -53 c 55 -41 160 -37 261 5 c 69 26 125 35 124 -60 c -3 -80 -26 -208 -12 -249 c 7 -14 23 -36 40 -49 c 15 -10 22 -18 36 -18 Z' fill-opacity='0' stroke='%239D9D9D' stroke-width='50' stroke-linejoin='round'/><path d='M 1045 656 c -4 -8 -7 -14 -11 -20 c 17 0 85 48 95 59 c 3 7 5 13 10 26 c -30 -23 -63 -47 -94 -65 Z' fill='url(%23grad1)'/><path d='M 1089 744 c 2 9 2 12 4 19 c 18 14 53 48 69 65 c 0 -6 0 -10 -1 -15 c -18 -19 -48 -50 -72 -70 Z' fill='url(%23grad2)'/><path d='M 144 666 L 134 657 L 121 661 L 139 630 L 144 666 L 153 665 L 215 679 L 215 683 L 153 669 L 153 665 Z' fill='red'/></svg>");
+            background-size: contain;
+            background-position: center center;
+            background-repeat: no-repeat;
+}
+    </style>
+</head>
+<body>
+    
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Car properties
+        const car = {
+            width: 10,
+            height: 16,
+            x: canvas.width *0.166,
+            y: canvas.height *0.65,
+            speed: 0,
+            maxSpeed: 4.5,
+            angle: 0.23,
+            friction: 0.05,
+            driftThreshold: 2.5,
+            momentumX: 0,
+            momentumY: 0
+        };
+
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            a: false,
+            d: false
+        };
+
+        // Handling key events
+        document.addEventListener('keydown', (event) => {
+            if (keys.hasOwnProperty(event.key)) {
+                keys[event.key] = true;
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (keys.hasOwnProperty(event.key)) {
+                keys[event.key] = false;
+            }
+        });
+
+        function updateCar() {
+            // Accelerate forward
+            if (keys.ArrowUp) {
+                car.speed = Math.min(car.speed + 0.01, car.maxSpeed);
+            }
+
+            // Brake and reverse
+            if (keys.ArrowDown) {
+                if (Math.abs(car.speed)<0.07) {
+                    car.speed = Math.max(car.speed - 0.01, -car.maxSpeed / 2); // Reverse speed is slower
+                } else {
+                    car.momentumX *= 0.95;
+                    car.momentumY *= 0.95;
+                }
+            }
+
+            // Turn the car
+            if (keys.a) {
+                car.angle -= 1/(Math.abs(car.speed)+0.2) *0.024;
+            }
+            if (keys.d) {
+                car.angle += 1/(Math.abs(car.speed)+0.2) *0.024;
+            }
+            if (keys.ArrowLeft) {
+                car.angle -= 1/(Math.abs(car.speed)+0.2) *0.024;
+            }
+            if (keys.ArrowRight) {
+                car.angle += 1/(Math.abs(car.speed)+0.2) *0.024;
+            }
+
+            // Apply speed to momentum
+            car.momentumX += Math.sin(car.angle) * car.speed;
+            car.momentumY -= Math.cos(car.angle) * car.speed;
+
+            // Friction slows down the momentum
+            car.momentumX *= (1 - car.friction);
+            car.momentumY *= (1 - car.friction);
+
+            // Update car position based on momentum
+            car.x += car.momentumX;
+            car.y += car.momentumY;
+
+            // Simulate drifting when the speed exceeds the friction threshold
+            if (Math.sqrt(car.momentumX ** 2 + car.momentumY ** 2) > car.driftThreshold) {
+                // Drifting effect: allow sliding in the current direction
+                car.speed *= 0.96; // Gradually reduce speed while drifting
+            } else {
+                car.speed *= 0.93; // Normal slow down when not drifting
+            }
+
+            // Limit speed to prevent the car from exceeding maximum speed
+            car.speed = Math.max(Math.min(car.speed, car.maxSpeed), -car.maxSpeed);
+        }
+
+        function drawCar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Save the current canvas state
+            ctx.save();
+
+            // Translate and rotate the canvas to draw the car
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+
+            // Draw the car (white rectangle)
+            ctx.fillStyle = '#a00';
+            ctx.fillRect(-car.width / 2, -car.height / 2, car.width, car.height);
+            
+             // Add a white stroke (outline) around the car
+            ctx.strokeStyle = '#f33'; // Stroke color (e.g., white)
+            ctx.lineWidth = 0.5; // Stroke width
+            ctx.strokeRect(-car.width / 2, -car.height / 2, car.width, car.height);
+
+            // Restore the original canvas state
+            ctx.restore();
+        }
+
+        function loop() {
+            updateCar();
+            drawCar();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
